@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#16324f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Planning PMA">
+<meta name="format-detection" content="telephone=no">
+<title>Planning PMA</title>
+<style>
+:root {
+  --navy: #16324f; --accent: #2d6aa3; --accent-soft: #e8f0f9; --bg: #eef2f7; --card: #ffffff; --ink: #1f2a37;
+  --muted: #64748b; --line: #dde4ec; --today: #fef3c7; --off: #f1f5f9; --danger: #b42323; --radius: 14px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, .06), 0 8px 24px rgba(15, 23, 42, .06);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.45 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; }
+.cache { display: none !important; }
+
+/* ---------- connexion */
+.connexion { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+  background: radial-gradient(1200px 600px at 10% -10%, #2d6aa3 0%, transparent 60%), linear-gradient(160deg, #16324f, #0e2238); }
+.carte-connexion { width: 100%; max-width: 380px; background: var(--card); border-radius: 20px; padding: 32px 28px 26px; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.marque { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+.logo { width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #2d6aa3, #16324f); display: grid; place-items: center; }
+.marque h1 { margin: 0; font-size: 20px; color: var(--navy); letter-spacing: -.01em; }
+.marque p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin: 14px 0 6px; }
+input[type=text], input[type=password] { width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: #f8fafc;
+  outline: none; transition: border .15s, box-shadow .15s; }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,106,163,.15); background: #fff; }
+.bouton { width: 100%; margin-top: 20px; padding: 12px 16px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 600;
+  cursor: pointer; transition: background .15s, transform .05s; }
+.bouton:hover { background: #255a8b; } .bouton:active { transform: translateY(1px); } .bouton:disabled { opacity: .7; cursor: progress; }
+.erreur { color: var(--danger); font-size: 13px; margin-top: 12px; min-height: 18px; }
+.note { color: var(--muted); font-size: 12px; margin-top: 18px; line-height: 1.5; }
+
+/* ---------- application */
+.entete { position: sticky; top: 0; z-index: 20; background: var(--navy); color: #fff; padding: 10px 16px calc(10px) 16px;
+  display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.15); padding-top: max(10px, env(safe-area-inset-top)); }
+.entete .titre { font-weight: 700; font-size: 16px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
+.entete .titre .logo { width: 30px; height: 30px; border-radius: 8px; }
+.entete .espace { flex: 1; }
+.entete .qui { font-size: 13px; color: #c3d3e4; text-align: right; line-height: 1.2; }
+.entete .qui b { color: #fff; display: block; font-size: 14px; }
+.lien-sortir { background: rgba(255,255,255,.12); border: 0; color: #fff; padding: 8px 12px; border-radius: 9px; cursor: pointer; font-size: 13px; }
+.lien-sortir:hover { background: rgba(255,255,255,.2); } .lien-sortir .court { display: none; }
+main { max-width: 1400px; margin: 0 auto; padding: 18px 16px 40px; }
+.maj { color: var(--muted); font-size: 12px; margin: 0 0 14px; }
+.bandeau { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 18px; }
+.bloc { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px 18px; }
+.bloc h2 { margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.pastille-nb { background: var(--accent); color: #fff; border-radius: 999px; font-size: 11px; padding: 1px 8px; letter-spacing: 0; }
+.vide { color: var(--muted); font-size: 14px; }
+.info { border-left: 4px solid; border-radius: 0 10px 10px 0; padding: 10px 12px; margin-bottom: 8px; }
+.info .quand { font-size: 12px; font-weight: 700; opacity: .8; margin-bottom: 2px; }
+.message { padding: 10px 0; border-bottom: 1px solid var(--line); } .message:last-child { border-bottom: 0; }
+.message .quand { font-size: 12px; color: var(--muted); } .message .texte { margin-top: 3px; white-space: pre-wrap; }
+.barre { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.segment { display: inline-flex; background: #e2e8f0; padding: 4px; border-radius: 12px; gap: 4px; flex-wrap: wrap; }
+.segment button { border: 0; background: transparent; padding: 8px 14px; border-radius: 9px; color: #334155; font-weight: 600; cursor: pointer; font-size: 14px; }
+.segment button.actif { background: #fff; color: var(--navy); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.planning { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.defile { overflow: auto; max-height: calc(100vh - 140px); -webkit-overflow-scrolling: touch; }
+table { border-collapse: separate; border-spacing: 0; font-size: 13px; }
+th, td { border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); height: 36px; padding: 0 4px; text-align: center; white-space: nowrap; }
+thead th { position: sticky; top: 0; z-index: 3; background: #f8fafc; font-weight: 600; color: #475569; height: 46px; font-size: 12px; line-height: 1.15; min-width: 52px; }
+thead th .j { display: block; font-size: 14px; color: var(--ink); }
+th.nom { position: sticky; left: 0; z-index: 2; background: #fff; text-align: left; padding: 0 12px; min-width: 120px; font-weight: 600; color: var(--ink); }
+thead th.nom { z-index: 4; background: #f8fafc; }
+th.off, td.off { background: var(--off); }
+th.auj { background: var(--today) !important; color: #92400e; }
+td.auj { box-shadow: inset 0 0 0 9999px rgba(254, 243, 199, .55); }
+td .case { display: inline-block; min-width: 44px; max-width: 76px; padding: 5px 6px; border-radius: 7px; font-weight: 600; font-size: 12px;
+  color: #0f172a; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
+tr.moi th.nom { color: var(--accent); }
+tr.moi th.nom::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 7px; vertical-align: middle; }
+tr.moi td { background-image: linear-gradient(rgba(45,106,163,.06), rgba(45,106,163,.06)); }
+tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
+.brouillon { padding: 40px 20px; text-align: center; color: var(--muted); }
+.agenda { display: grid; gap: 8px; padding: 12px; }
+.jour { display: flex; align-items: center; gap: 12px; background: #f8fafc; border-radius: 10px; padding: 10px 12px; }
+.jour.auj { background: var(--today); } .jour.off { opacity: .85; } .jour.passe { opacity: .5; }
+.jour .date { width: 64px; flex: none; } .jour .date b { display: block; font-size: 18px; color: var(--navy); line-height: 1; }
+.jour .date span { font-size: 12px; color: var(--muted); }
+.jour .poste { font-weight: 700; padding: 6px 12px; border-radius: 8px; } .jour .rien { color: var(--muted); }
+.jour .contenu { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.jour .note-jour { font-size: 12.5px; border-left: 3px solid; padding: 3px 8px; border-radius: 0 6px 6px 0; }
+.voir-passes { border: 1px dashed #cbd5e1; background: transparent; color: var(--accent); font-weight: 600; padding: 10px; border-radius: 10px; cursor: pointer; }
+.jour.auj { box-shadow: inset 4px 0 0 #f59e0b; } .jour.auj .date span { color: #92400e; font-weight: 700; }
+.chargement { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%;
+  animation: tourne .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
+@keyframes tourne { to { transform: rotate(360deg); } }
+@media (max-width: 640px) {
+  html, body { font-size: 15px; }
+  input[type=text], input[type=password] { font-size: 16px; }      /* iPhone : pas de zoom à la saisie */
+  .carte-connexion { padding: 26px 20px 22px; border-radius: 18px; }
+  .entete { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); gap: 8px; }
+  .entete .titre { font-size: 15px; } .entete .qui span { display: none; }
+  .lien-sortir { padding: 8px 10px; }
+  .lien-sortir .long { display: none; } .lien-sortir .court { display: inline; }
+  main { padding: 12px 10px calc(30px + env(safe-area-inset-bottom)); }
+  .maj { margin-bottom: 10px; }
+  .bandeau { grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+  .bloc { padding: 14px; }
+  .bloc h2 { font-size: 12.5px; margin-bottom: 10px; }
+  .barre { flex-direction: column; align-items: stretch; gap: 8px; }
+  .segment { display: flex; flex-wrap: nowrap; }
+  .segment button { flex: 1 1 0; padding: 9px 4px; font-size: 13px; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  th.nom { min-width: 84px; max-width: 96px; padding: 0 8px; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+  thead th { min-width: 46px; }
+  td .case { min-width: 38px; max-width: 58px; font-size: 11.5px; padding: 5px 4px; }
+  .defile { max-height: calc(100vh - 110px); max-height: calc(100dvh - 110px); }
+  .agenda { padding: 8px; gap: 6px; }
+  .jour { padding: 10px; }
+  .jour .date { width: 56px; }
+}
+@media print { .entete, .barre .segment:last-child, .bandeau { display: none; } .defile { max-height: none; overflow: visible; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="#fff" stroke-width="2"/><path d="M16 3v4M8 3v4M3 10h18" stroke="#fff" stroke-width="2" stroke-linecap="round"/></symbol></svg>
+
+<section class="connexion" id="ecran-connexion">
+  <form class="carte-connexion" id="formulaire" autocomplete="on">
+    <div class="marque"><div class="logo"><svg width="24" height="24"><use href="#cal"/></svg></div>
+      <div><h1>Planning PMA</h1><p>Consultation du planning</p></div></div>
+    <label for="identifiant">Identifiant</label>
+    <input type="text" id="identifiant" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+    <label for="mdp">Mot de passe</label>
+    <input type="password" id="mdp" autocomplete="current-password" required>
+    <button class="bouton" id="valider" type="submit">Se connecter</button>
+    <div class="erreur" id="erreur" role="alert"></div>
+    <p class="note">Les mêmes identifiant et mot de passe que dans le logiciel (8 caractères ou plus).
+      Tout est chiffré : le planning n'est lisible qu'après votre connexion, sur votre appareil.</p>
+  </form>
+</section>
+
+<div id="appli" class="cache">
+  <header class="entete">
+    <div class="titre"><div class="logo"><svg width="18" height="18"><use href="#cal"/></svg></div>Planning PMA</div>
+    <div class="espace"></div>
+    <div class="qui"><b id="nom"></b><span id="compte"></span></div>
+    <button class="lien-sortir" id="sortir" type="button" title="Se déconnecter"><span class="long">Se déconnecter</span><span class="court">Quitter</span></button>
+  </header>
+  <main>
+    <p class="maj" id="maj"></p>
+    <div class="bandeau">
+      <section class="bloc"><h2>Infos du jour</h2><div id="infos"></div></section>
+      <section class="bloc"><h2>Messages du cadre <span class="pastille-nb cache" id="nb-messages"></span></h2><div id="messages"></div></section>
+    </div>
+    <div class="barre">
+      <div class="segment" id="choix-mois"></div>
+      <div class="segment" id="choix-vue"></div>
+    </div>
+    <section class="planning" id="planning"></section>
+  </main>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const enc = new TextEncoder(), dec = new TextDecoder();
+const d64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+const b64 = (o) => btoa(String.fromCharCode(...new Uint8Array(o)));
+const echap = (t) => String(t).replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+let etat = { donnees: null, messages: [], cles: null, mois: null, vue: "techs" };
+
+async function lireJSON(nom) {
+  const r = await fetch(nom + "?t=" + Date.now(), { cache: "no-store" });
+  if (!r.ok) throw new Error(nom + " : " + r.status);
+  return r.json();
+}
+async function cleAES(brute) { return crypto.subtle.importKey("raw", brute, "AES-GCM", false, ["decrypt"]); }
+async function dechiffrer(cle, env) {
+  const clair = await crypto.subtle.decrypt({ name: "AES-GCM", iv: d64(env.n) }, cle, d64(env.c));
+  return JSON.parse(dec.decode(clair));
+}
+async function cleDuMotDePasse(mdp, sel, tours) {
+  const base = await crypto.subtle.importKey("raw", enc.encode(mdp), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({ name: "PBKDF2", salt: sel, iterations: tours, hash: "SHA-256" }, base,
+                                 { name: "AES-GCM", length: 256 }, false, ["decrypt"]);
+}
+async function empreinte(sel, texte) {
+  const tout = new Uint8Array([...sel, ...enc.encode(texte)]);
+  return [...new Uint8Array(await crypto.subtle.digest("SHA-256", tout))].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+async function seConnecter(ev) {
+  ev.preventDefault();
+  const id = $("identifiant").value.trim(), mdp = $("mdp").value;
+  $("erreur").textContent = "";
+  if (!window.crypto || !crypto.subtle) { $("erreur").textContent = "Ce navigateur ne permet pas l'ouverture sécurisée."; return; }
+  const bouton = $("valider");
+  bouton.disabled = true; bouton.innerHTML = '<span class="chargement"></span>Ouverture sécurisée…';
+  try {
+    const acces = await lireJSON("acces.json");
+    const sel = d64(acces.sel);
+    const boite = acces.comptes[await empreinte(sel, id.toLowerCase())];
+    if (!boite) throw new Error("inconnu");
+    const kek = await cleDuMotDePasse(mdp, d64(boite.s), boite.i);
+    const cles = await dechiffrer(kek, boite);
+    sessionStorage.setItem("pma", JSON.stringify(cles));
+    $("mdp").value = "";
+    await ouvrir(cles);
+  } catch (e) {
+    $("erreur").textContent = e.message === "inconnu" ?
+      "Identifiant inconnu, ou accès en ligne pas encore activé : connectez-vous une fois au logiciel (mot de passe de 8 caractères ou plus)." :
+      "Identifiant ou mot de passe incorrect.";
+  } finally {
+    bouton.disabled = false; bouton.textContent = "Se connecter";
+  }
+}
+
+async function charger() {
+  const [donnees, msg] = await Promise.all([lireJSON("donnees.json"), lireJSON("m/" + etat.cles.m + ".json").catch(() => null)]);
+  etat.donnees = await dechiffrer(await cleAES(d64(etat.cles.k)), donnees);
+  etat.messages = msg ? (await dechiffrer(await cleAES(d64(etat.cles.u)), msg)).messages : [];
+}
+
+async function ouvrir(cles) {
+  etat.cles = cles;
+  await charger();
+  $("ecran-connexion").classList.add("cache");
+  $("appli").classList.remove("cache");
+  $("nom").textContent = cles.a || cles.c;
+  $("compte").textContent = cles.a ? cles.c : "";
+  const courant = etat.donnees.mois.find((m) => etat.donnees.auj.startsWith(m.cle)) || etat.donnees.mois[1];
+  etat.mois = etat.mois || (courant && courant.cle);
+  dessiner();
+}
+
+function dateLongue(iso) {
+  const d = new Date(iso + "T12:00:00");
+  return JOURS[d.getDay()] + " " + d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+}
+
+function dessinerBandeau() {
+  const D = etat.donnees;
+  $("maj").textContent = "Mis à jour le " + D.maj.slice(8, 10) + "/" + D.maj.slice(5, 7) + " à " + D.maj.slice(11);
+  const aVenir = D.infos.filter((i) => i.d >= D.auj).slice(0, 8);
+  $("infos").innerHTML = aVenir.length ? aVenir.map((i) =>
+    `<div class="info" style="background:${echap(i.f)};border-color:${echap(i.l)};color:${echap(i.e)}">` +
+    `<div class="quand">${i.d === D.auj ? "Aujourd'hui" : echap(dateLongue(i.d))}</div>${echap(i.t)}</div>`).join("")
+    : '<p class="vide">Aucune info pour les jours qui viennent.</p>';
+  const m = etat.messages;
+  $("nb-messages").textContent = m.length; $("nb-messages").classList.toggle("cache", !m.length);
+  $("messages").innerHTML = m.length ? m.slice(0, 6).map((x) =>
+    `<div class="message"><div class="quand">${echap(x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + " à " + x.d.slice(11))} · ${echap(x.de)}${x.tous ? " · à tous" : ""}</div>` +
+    `<div class="texte">${echap(x.t)}</div></div>`).join("")
+    : '<p class="vide">Pas de message pour vous.</p>';
+}
+
+function boutons(conteneur, choix, actif, rappel) {
+  conteneur.innerHTML = "";
+  for (const [cle, texte] of choix) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = texte; b.className = cle === actif ? "actif" : "";
+    b.onclick = () => rappel(cle);
+    conteneur.appendChild(b);
+  }
+}
+
+function couleurCase(v) {
+  const C = etat.donnees.couleurs;
+  if (!v) return "";
+  const p = v.split(/[\/+]/);
+  if (p.length === 2 && C[p[0]] && C[p[1]]) return `background:linear-gradient(90deg, ${C[p[0]]} 50%, ${C[p[1]]} 50%)`;
+  return C[v] ? `background:${C[v]}` : "background:#e2e8f0";
+}
+
+function dessinerPlanning() {
+  const D = etat.donnees, M = D.mois.find((m) => m.cle === etat.mois) || D.mois[1];
+  const moi = etat.cles.a;
+  const vues = [["techs", "Techniciens"], ["bio", "Biologistes"]];
+  const maLigne = M.brouillon || !moi ? null : M.techs.find((r) => r.nom === moi) ||
+    (M.bio.some((r) => r.c.includes(moi)) ? { c: M.jours.map((_j, i) => M.bio.filter((r) => r.c[i] === moi).map((r) => r.t).join(" + ")) } : null);
+  if (maLigne) vues.push(["moi", "Mon planning"]);
+  if (!etat.vueChoisie && maLigne && window.matchMedia("(max-width: 640px)").matches) etat.vue = "moi";
+  if (!vues.some((v) => v[0] === etat.vue)) etat.vue = "techs";
+  const court = window.matchMedia("(max-width: 400px)").matches;       // petit téléphone : « Nov. 2026 »
+  const nomCourt = (m) => { const t = new Date(m.cle + "-15T12:00:00").toLocaleDateString("fr-FR", { month: "short" });
+    const n = (t.charAt(0).toUpperCase() + t.slice(1)).replace(/\.?$/, ".").replace(/^(Mai|Juin|Août)\.$/, "$1");
+    return n + " " + m.cle.slice(0, 4); };
+  boutons($("choix-mois"), D.mois.map((m) => [m.cle, court ? nomCourt(m) : m.nom]), M.cle,
+          (c) => { etat.mois = c; dessiner(); });
+  boutons($("choix-vue"), vues, etat.vue, (v) => { etat.vue = v; etat.vueChoisie = true; dessiner(); });
+  const zone = $("planning");
+  if (M.brouillon) { zone.innerHTML = '<div class="brouillon">Le planning de ce mois est en préparation.</div>'; return; }
+  const auj = D.auj.startsWith(M.cle) ? Number(D.auj.slice(8, 10)) : 0;
+  if (etat.vue === "moi") {
+    const notes = {};
+    for (const x of D.infos) (notes[x.d] = notes[x.d] || []).push(x);
+    const caches = auj && !etat.passes ? auj - 1 : 0;      // mois en cours : à partir d'aujourd'hui
+    zone.innerHTML = '<div class="agenda">' + (caches ? `<button type="button" class="voir-passes" id="voir-passes">Afficher les ${caches} jour${caches > 1 ? "s" : ""} passé${caches > 1 ? "s" : ""}</button>` : "") +
+      M.jours.map((j, i) => {
+      if (j.j <= caches) return "";
+      const v = maLigne.c[i];
+      const iso = M.cle + "-" + String(j.j).padStart(2, "0");
+      const infos = (notes[iso] || []).map((x) => `<span class="note-jour" style="background:${echap(x.f)};border-color:${echap(x.l)};color:${echap(x.e)}">${echap(x.t)}</span>`).join("");
+      return `<div class="jour${j.j === auj ? " auj" : ""}${j.off ? " off" : ""}${auj && j.j < auj ? " passe" : ""}"><div class="date"><b>${j.j}</b><span>${echap(j.s)}${j.ferie ? " · férié" : ""}</span></div>` +
+        '<div class="contenu">' + (v ? `<span class="poste" style="${couleurCase(v)}">${echap(v)}</span>` : '<span class="rien">—</span>') + infos + "</div></div>";
+    }).join("") + "</div>";
+    if (caches) $("voir-passes").onclick = () => { etat.passes = true; dessinerPlanning(); };
+    return;
+  }
+  const lignes = etat.vue === "bio" ? M.bio.map((r) => ({ nom: r.t, c: r.c })) : M.techs;
+  let html = '<div class="defile"><table><thead><tr><th class="nom">' + (etat.vue === "bio" ? "Tâche" : "Agent") + "</th>";
+  html += M.jours.map((j) => `<th class="${j.off ? "off" : ""}${j.j === auj ? " auj" : ""}" title="${echap(j.ferie)}">${echap(j.s)}<span class="j">${j.j}</span></th>`).join("");
+  html += "</tr></thead><tbody>";
+  let fonction = null;
+  for (const r of lignes) {
+    const sep = etat.vue === "techs" && fonction && r.f !== fonction;
+    fonction = r.f;
+    html += `<tr class="${r.nom === moi ? "moi" : ""}${sep ? " separation" : ""}"><th class="nom">${echap(r.nom)}</th>`;
+    html += r.c.map((v, i) => {
+      const j = M.jours[i];
+      return `<td class="${j.off ? "off" : ""}${j.j === auj ? " auj" : ""}">${v ? `<span class="case" style="${couleurCase(v)}" title="${echap(v)}">${echap(v)}</span>` : ""}</td>`;
+    }).join("") + "</tr>";
+  }
+  zone.innerHTML = html + "</tbody></table></div>";
+  if (auj) {          // se placer sur aujourd'hui
+    const cel = zone.querySelector("th.auj");
+    const def = zone.querySelector(".defile");
+    if (cel && def) def.scrollLeft = Math.max(0, cel.offsetLeft - 160);
+  }
+}
+
+function dessiner() { dessinerBandeau(); dessinerPlanning(); }
+
+function sortir() { sessionStorage.removeItem("pma"); location.reload(); }
+
+$("formulaire").addEventListener("submit", seConnecter);
+$("sortir").addEventListener("click", sortir);
+(async () => {
+  const garde = sessionStorage.getItem("pma");
+  if (garde) { try { await ouvrir(JSON.parse(garde)); } catch (e) { sessionStorage.removeItem("pma"); } }
+})();
+document.addEventListener("visibilitychange", async () => {     // retour sur la page (notification) : tout de suite à jour
+  if (document.hidden || !etat.cles) return;
+  try { await charger(); dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
+});
+setInterval(async () => {           // mise à jour toutes les 5 minutes tant que la page est ouverte
+  if (!etat.cles || document.hidden) return;
+  try { await charger(); dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
+}, 5 * 60 * 1000);
+</script>
+</body>
+</html>
