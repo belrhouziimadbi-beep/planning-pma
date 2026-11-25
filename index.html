@@ -349,10 +349,10 @@ document.addEventListener("visibilitychange", async () => {     // retour sur la
   if (document.hidden || !etat.cles) return;
   try { await charger(); dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
 });
-setInterval(async () => {           // mise à jour toutes les 5 minutes tant que la page est ouverte
+setInterval(async () => {           // mise à jour toutes les minutes tant que la page est ouverte
   if (!etat.cles || document.hidden) return;
   try { await charger(); dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
-}, 5 * 60 * 1000);
+}, 60 * 1000);
 </script>
 </body>
 </html>
