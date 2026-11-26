@@ -94,6 +94,8 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
 .jour .poste { font-weight: 700; padding: 6px 12px; border-radius: 8px; } .jour .rien { color: var(--muted); }
 .jour .contenu { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .jour .note-jour { font-size: 12.5px; border-left: 3px solid; padding: 3px 8px; border-radius: 0 6px 6px 0; }
+.bloc .voir-passes { width: 100%; margin-top: 6px; }
+.archive { margin-top: 10px; opacity: .75; } .info.passee { filter: saturate(.6); }
 .voir-passes { border: 1px dashed #cbd5e1; background: transparent; color: var(--accent); font-weight: 600; padding: 10px; border-radius: 10px; cursor: pointer; }
 .jour.auj { box-shadow: inset 4px 0 0 #f59e0b; } .jour.auj .date span { color: #92400e; font-weight: 700; }
 .chargement { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%;
@@ -247,17 +249,29 @@ function dateLongue(iso) {
 function dessinerBandeau() {
   const D = etat.donnees;
   $("maj").textContent = "Mis à jour le " + D.maj.slice(8, 10) + "/" + D.maj.slice(5, 7) + " à " + D.maj.slice(11);
-  const aVenir = D.infos.filter((i) => i.d >= D.auj).slice(0, 8);
-  $("infos").innerHTML = aVenir.length ? aVenir.map((i) =>
-    `<div class="info" style="background:${echap(i.f)};border-color:${echap(i.l)};color:${echap(i.e)}">` +
-    `<div class="quand">${i.d === D.auj ? "Aujourd'hui" : echap(dateLongue(i.d))}</div>${echap(i.t)}</div>`).join("")
-    : '<p class="vide">Aucune info pour les jours qui viennent.</p>';
-  const m = etat.messages;
-  $("nb-messages").textContent = m.length; $("nb-messages").classList.toggle("cache", !m.length);
-  $("messages").innerHTML = m.length ? m.slice(0, 6).map((x) =>
+  // Infos : aujourd'hui et les jours qui viennent ; les passées seulement à la demande
+  const carteInfo = (i, passee) =>
+    `<div class="info${passee ? " passee" : ""}" style="background:${echap(i.f)};border-color:${echap(i.l)};color:${echap(i.e)}">` +
+    `<div class="quand">${i.d === D.auj ? "Aujourd'hui" : echap(dateLongue(i.d))}</div>${echap(i.t)}</div>`;
+  const aVenir = D.infos.filter((i) => i.d >= D.auj);
+  const passees = D.infos.filter((i) => i.d < D.auj).reverse();          // la plus récente d'abord
+  $("infos").innerHTML = (aVenir.length ? aVenir.map((i) => carteInfo(i, false)).join("")
+                                        : '<p class="vide">Aucune info pour aujourd\'hui ni pour les jours qui viennent.</p>') +
+    (passees.length ? `<button type="button" class="voir-passes" id="voir-infos-passees">${etat.infosPassees ? "Masquer" : "Voir"} les infos passées (${passees.length})</button>` +
+                      (etat.infosPassees ? '<div class="archive">' + passees.map((i) => carteInfo(i, true)).join("") + "</div>" : "") : "");
+  if (passees.length) $("voir-infos-passees").onclick = () => { etat.infosPassees = !etat.infosPassees; dessinerBandeau(); };
+  // Messages : ceux des 7 derniers jours ; les plus anciens sont archivés, affichés à la demande
+  const limite = new Date(D.auj + "T00:00:00"); limite.setDate(limite.getDate() - 7);
+  const recent = (x) => new Date(x.d.slice(0, 10) + "T00:00:00") >= limite;
+  const carteMsg = (x) =>
     `<div class="message"><div class="quand">${echap(x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + " à " + x.d.slice(11))} · ${echap(x.de)}${x.tous ? " · à tous" : ""}</div>` +
-    `<div class="texte">${echap(x.t)}</div></div>`).join("")
-    : '<p class="vide">Pas de message pour vous.</p>';
+    `<div class="texte">${echap(x.t)}</div></div>`;
+  const recents = etat.messages.filter(recent), archives = etat.messages.filter((x) => !recent(x));
+  $("nb-messages").textContent = recents.length; $("nb-messages").classList.toggle("cache", !recents.length);
+  $("messages").innerHTML = (recents.length ? recents.map(carteMsg).join("") : '<p class="vide">Pas de nouveau message cette semaine.</p>') +
+    (archives.length ? `<button type="button" class="voir-passes" id="voir-archives">${etat.archives ? "Masquer" : "Voir"} les messages archivés (${archives.length})</button>` +
+                       (etat.archives ? '<div class="archive">' + archives.map(carteMsg).join("") + "</div>" : "") : "");
+  if (archives.length) $("voir-archives").onclick = () => { etat.archives = !etat.archives; dessinerBandeau(); };
 }
 
 function boutons(conteneur, choix, actif, rappel) {
