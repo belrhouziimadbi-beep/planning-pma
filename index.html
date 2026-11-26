@@ -96,6 +96,15 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
 .jour .note-jour { font-size: 12.5px; border-left: 3px solid; padding: 3px 8px; border-radius: 0 6px 6px 0; }
 .bloc .voir-passes { width: 100%; margin-top: 6px; }
 .archive { margin-top: 10px; opacity: .75; } .info.passee { filter: saturate(.6); }
+.depliant { margin-top: 10px; }
+.depliant > button { display: flex; width: 100%; align-items: center; justify-content: space-between; border: 0; background: #f1f5f9;
+  color: var(--navy); font-weight: 600; padding: 10px 12px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+.depliant > button:hover { background: #e2e8f0; }
+.depliant > button .fleche { transition: transform .15s; } .depliant.ouvert > button .fleche { transform: rotate(180deg); }
+.depliant .contenu { margin-top: 8px; }
+.avertir { position: sticky; top: 64px; z-index: 15; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 12px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.avertir button { border: 0; background: #ea580c; color: #fff; font-weight: 600; padding: 8px 12px; border-radius: 8px; cursor: pointer; }
 .voir-passes { border: 1px dashed #cbd5e1; background: transparent; color: var(--accent); font-weight: 600; padding: 10px; border-radius: 10px; cursor: pointer; }
 .jour.auj { box-shadow: inset 4px 0 0 #f59e0b; } .jour.auj .date span { color: #92400e; font-weight: 700; }
 .chargement { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%;
@@ -154,10 +163,12 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
     <button class="lien-sortir" id="sortir" type="button" title="Se déconnecter"><span class="long">Se déconnecter</span><span class="court">Quitter</span></button>
   </header>
   <main>
+    <div class="avertir cache" id="avertir">Sans activité, vous serez déconnecté dans <b id="compte-rebours">60</b> secondes.
+      <button type="button" id="rester">Rester connecté</button></div>
     <p class="maj" id="maj"></p>
     <div class="bandeau">
       <section class="bloc"><h2>Infos du jour</h2><div id="infos"></div></section>
-      <section class="bloc"><h2>Messages du cadre <span class="pastille-nb cache" id="nb-messages"></span></h2><div id="messages"></div></section>
+      <section class="bloc"><h2>Messages <span class="pastille-nb cache" id="nb-messages"></span></h2><div id="messages"></div></section>
     </div>
     <div class="barre">
       <div class="segment" id="choix-mois"></div>
@@ -175,7 +186,7 @@ const d64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
 const b64 = (o) => btoa(String.fromCharCode(...new Uint8Array(o)));
 const echap = (t) => String(t).replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-let etat = { donnees: null, messages: [], cles: null, mois: null, vue: "techs" };
+let etat = { donnees: null, messages: [], cles: null, mois: null, vue: "techs", ouverts: {} };
 
 async function lireJSON(nom) {
   const r = await fetch(nom + "?t=" + Date.now(), { cache: "no-store" });
@@ -212,6 +223,7 @@ async function seConnecter(ev) {
     const kek = await cleDuMotDePasse(mdp, d64(boite.s), boite.i);
     const cles = await dechiffrer(kek, boite);
     sessionStorage.setItem("pma", JSON.stringify(cles));
+    derniereActivite = Date.now(); sessionStorage.setItem("pma-actif", String(derniereActivite));
     $("mdp").value = "";
     await ouvrir(cles);
   } catch (e) {
@@ -243,35 +255,48 @@ async function ouvrir(cles) {
 
 function dateLongue(iso) {
   const d = new Date(iso + "T12:00:00");
-  return JOURS[d.getDay()] + " " + d.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  const mois = d.toLocaleDateString("fr-FR", { month: "long" });
+  return JOURS[d.getDay()] + " " + (d.getDate() === 1 ? "1er" : d.getDate()) + " " + mois;       // « mardi 1er décembre »
 }
 
 function dessinerBandeau() {
   const D = etat.donnees;
   $("maj").textContent = "Mis à jour le " + D.maj.slice(8, 10) + "/" + D.maj.slice(5, 7) + " à " + D.maj.slice(11);
-  // Infos : aujourd'hui et les jours qui viennent ; les passées seulement à la demande
+  // Infos : celles du jour ; « Infos à venir » et « Infos archivées » se déplient d'un clic
+  const quand = (i) => {
+    const maj = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+    if (i.du === i.au) return i.du === D.auj ? "Aujourd'hui" : maj(dateLongue(i.du));
+    if (i.du <= D.auj && D.auj <= i.au) return "Aujourd'hui, jusqu'au " + dateLongue(i.au);
+    return "Du " + dateLongue(i.du) + " au " + dateLongue(i.au);
+  };
   const carteInfo = (i, passee) =>
     `<div class="info${passee ? " passee" : ""}" style="background:${echap(i.f)};border-color:${echap(i.l)};color:${echap(i.e)}">` +
-    `<div class="quand">${i.d === D.auj ? "Aujourd'hui" : echap(dateLongue(i.d))}</div>${echap(i.t)}</div>`;
-  const aVenir = D.infos.filter((i) => i.d >= D.auj);
-  const passees = D.infos.filter((i) => i.d < D.auj).reverse();          // la plus récente d'abord
-  $("infos").innerHTML = (aVenir.length ? aVenir.map((i) => carteInfo(i, false)).join("")
-                                        : '<p class="vide">Aucune info pour aujourd\'hui ni pour les jours qui viennent.</p>') +
-    (passees.length ? `<button type="button" class="voir-passes" id="voir-infos-passees">${etat.infosPassees ? "Masquer" : "Voir"} les infos passées (${passees.length})</button>` +
-                      (etat.infosPassees ? '<div class="archive">' + passees.map((i) => carteInfo(i, true)).join("") + "</div>" : "") : "");
-  if (passees.length) $("voir-infos-passees").onclick = () => { etat.infosPassees = !etat.infosPassees; dessinerBandeau(); };
-  // Messages : ceux des 7 derniers jours ; les plus anciens sont archivés, affichés à la demande
-  const limite = new Date(D.auj + "T00:00:00"); limite.setDate(limite.getDate() - 7);
-  const recent = (x) => new Date(x.d.slice(0, 10) + "T00:00:00") >= limite;
+    `<div class="quand">${echap(quand(i))}</div>${echap(i.t)}</div>`;
+  const duJour = D.infos.filter((i) => i.du <= D.auj && D.auj <= i.au);
+  const aVenir = D.infos.filter((i) => i.du > D.auj);
+  const archivees = D.infos.filter((i) => i.au < D.auj).reverse();        // la plus récente d'abord
+  $("infos").innerHTML = (duJour.length ? duJour.map((i) => carteInfo(i, false)).join("") : '<p class="vide">Aucune info aujourd\'hui.</p>') +
+    depliant("infos-a-venir", "Infos à venir", aVenir.map((i) => carteInfo(i, false)).join(""), aVenir.length) +
+    depliant("infos-archivees", "Infos archivées", '<div class="archive">' + archivees.map((i) => carteInfo(i, true)).join("") + "</div>", archivees.length);
+  // Messages : les nouveaux ; ceux déjà lus (dans le logiciel) sont dans « Messages archivés »
   const carteMsg = (x) =>
     `<div class="message"><div class="quand">${echap(x.d.slice(8, 10) + "/" + x.d.slice(5, 7) + " à " + x.d.slice(11))} · ${echap(x.de)}${x.tous ? " · à tous" : ""}</div>` +
     `<div class="texte">${echap(x.t)}</div></div>`;
-  const recents = etat.messages.filter(recent), archives = etat.messages.filter((x) => !recent(x));
-  $("nb-messages").textContent = recents.length; $("nb-messages").classList.toggle("cache", !recents.length);
-  $("messages").innerHTML = (recents.length ? recents.map(carteMsg).join("") : '<p class="vide">Pas de nouveau message cette semaine.</p>') +
-    (archives.length ? `<button type="button" class="voir-passes" id="voir-archives">${etat.archives ? "Masquer" : "Voir"} les messages archivés (${archives.length})</button>` +
-                       (etat.archives ? '<div class="archive">' + archives.map(carteMsg).join("") + "</div>" : "") : "");
-  if (archives.length) $("voir-archives").onclick = () => { etat.archives = !etat.archives; dessinerBandeau(); };
+  const nouveaux = etat.messages.filter((x) => !x.lu), lus = etat.messages.filter((x) => x.lu);
+  $("nb-messages").textContent = nouveaux.length; $("nb-messages").classList.toggle("cache", !nouveaux.length);
+  $("messages").innerHTML = (nouveaux.length ? nouveaux.map(carteMsg).join("") : '<p class="vide">Aucun nouveau message.</p>') +
+    depliant("messages-archives", "Messages archivés", '<div class="archive">' + lus.map(carteMsg).join("") + "</div>", lus.length);
+  for (const id of ["infos-a-venir", "infos-archivees", "messages-archives"]) {
+    const b = $(id);
+    if (b) b.onclick = () => { etat.ouverts[id] = !etat.ouverts[id]; dessinerBandeau(); };
+  }
+}
+
+function depliant(id, titre, contenu, n) {
+  if (!n) return "";
+  const ouvert = !!etat.ouverts[id];
+  return `<div class="depliant${ouvert ? " ouvert" : ""}"><button type="button" id="${id}" aria-expanded="${ouvert}">` +
+    `<span>${titre} (${n})</span><span class="fleche">▾</span></button>${ouvert ? '<div class="contenu">' + contenu + "</div>" : ""}</div>`;
 }
 
 function boutons(conteneur, choix, actif, rappel) {
@@ -351,7 +376,31 @@ function dessinerPlanning() {
 
 function dessiner() { dessinerBandeau(); dessinerPlanning(); }
 
-function sortir() { sessionStorage.removeItem("pma"); location.reload(); }
+function sortir() { sessionStorage.removeItem("pma"); sessionStorage.removeItem("pma-actif"); location.reload(); }
+
+// Déconnexion automatique après 15 minutes sans activité (un compte oublié ouvert sur un ordinateur) ; avertissement 1 minute avant
+const INACTIVITE_MS = 15 * 60 * 1000, AVERTIR_MS = 60 * 1000;
+let derniereActivite = Number(sessionStorage.getItem("pma-actif")) || Date.now();
+function activite() {
+  if (!etat.cles) return;
+  derniereActivite = Date.now();
+  sessionStorage.setItem("pma-actif", String(derniereActivite));
+  $("avertir").classList.add("cache");
+}
+function surveillerInactivite() {
+  if (!etat.cles) return;
+  const reste = INACTIVITE_MS - (Date.now() - derniereActivite);
+  if (reste <= 0) { sortir(); return; }
+  if (reste <= AVERTIR_MS) {
+    $("compte-rebours").textContent = Math.ceil(reste / 1000);
+    $("avertir").classList.remove("cache");
+  }
+}
+for (const ev of ["click", "keydown", "scroll", "touchstart", "pointermove", "wheel"]) {
+  document.addEventListener(ev, () => { if (Date.now() - derniereActivite > 2000) activite(); }, { passive: true, capture: true });
+}
+$("rester").addEventListener("click", activite);
+setInterval(surveillerInactivite, 1000);
 
 $("formulaire").addEventListener("submit", seConnecter);
 $("sortir").addEventListener("click", sortir);
@@ -361,6 +410,7 @@ $("sortir").addEventListener("click", sortir);
 })();
 document.addEventListener("visibilitychange", async () => {     // retour sur la page (notification) : tout de suite à jour
   if (document.hidden || !etat.cles) return;
+  if (Date.now() - derniereActivite > INACTIVITE_MS) { sortir(); return; }     // parti plus de 15 minutes : déconnecté
   try { await charger(); dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
 });
 setInterval(async () => {           // mise à jour toutes les minutes tant que la page est ouverte
