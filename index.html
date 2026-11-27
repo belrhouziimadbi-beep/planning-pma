@@ -110,6 +110,26 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
 .chargement { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%;
   animation: tourne .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
 @keyframes tourne { to { transform: rotate(360deg); } }
+/* case coupée (deux demi-journées, deux missions) : en haut et en bas, comme dans le logiciel */
+.case.deux { display: inline-flex; flex-direction: column; padding: 0; overflow: hidden; line-height: 1.15; }
+.case.deux > span { display: block; padding: 2px 5px; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; }
+.case.deux > span + span { border-top: 1px solid rgba(255,255,255,.75); }
+.jour .poste.deux { padding: 0; display: inline-flex; flex-direction: column; overflow: hidden; }
+.jour .poste.deux > span { padding: 4px 12px; }
+.jour .poste.deux > span + span { border-top: 1px solid rgba(255,255,255,.75); }
+/* info du jour en une ligne au-dessus du planning (téléphone) */
+.puce-info { display: none; width: 100%; text-align: left; border: 0; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px;
+  font-weight: 600; font-size: 14px; cursor: pointer; align-items: center; gap: 8px; box-shadow: var(--shadow); }
+.puce-info .texte-puce { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* onglets du bas (téléphone) : Planning, Infos, Messages */
+.onglets-bas { display: none; }
+.onglets-bas button { flex: 1; border: 0; background: transparent; color: #64748b; font-size: 11.5px; font-weight: 600; padding: 7px 0 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; position: relative; }
+.onglets-bas button .ico { font-size: 20px; line-height: 1; }
+.onglets-bas button.actif { color: var(--navy); }
+.onglets-bas button.actif::before { content: ""; position: absolute; top: 0; left: 28%; right: 28%; height: 3px; border-radius: 0 0 3px 3px; background: var(--accent); }
+.onglets-bas .badge { position: absolute; top: 3px; left: calc(50% + 6px); background: #dc2626; color: #fff; border-radius: 999px;
+  font-size: 10px; min-width: 17px; height: 17px; line-height: 17px; padding: 0 4px; }
 @media (max-width: 640px) {
   html, body { font-size: 15px; }
   input[type=text], input[type=password] { font-size: 16px; }      /* iPhone : pas de zoom à la saisie */
@@ -133,8 +153,53 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
   .agenda { padding: 8px; gap: 6px; }
   .jour { padding: 10px; }
   .jour .date { width: 56px; }
+  /* Téléphone : le planning prend tout l'écran ; infos et messages ont leur onglet en bas */
+  main { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .onglets-bas { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: rgba(255,255,255,.97);
+    border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgba(15,23,42,.06); padding-bottom: env(safe-area-inset-bottom);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+  #appli[data-onglet="planning"] .bandeau { display: none; }
+  #appli[data-onglet="planning"] .puce-info.presente { display: flex; }
+  #appli[data-onglet="infos"] .barre, #appli[data-onglet="infos"] .planning, #appli[data-onglet="infos"] #bloc-messages { display: none; }
+  #appli[data-onglet="messages"] .barre, #appli[data-onglet="messages"] .planning, #appli[data-onglet="messages"] #bloc-infos { display: none; }
+  #appli[data-onglet="infos"] .maj, #appli[data-onglet="messages"] .maj { display: none; }
+  .defile { max-height: calc(100vh - 190px); max-height: calc(100dvh - 190px); }
+  .bloc { border-radius: 16px; }
 }
-@media print { .entete, .barre .segment:last-child, .bandeau { display: none; } .defile { max-height: none; overflow: visible; } }
+/* très petit téléphone (moins de 360 px) */
+@media (max-width: 359px) {
+  .entete .titre { font-size: 0; gap: 0; }                     /* le logo seul : la place va au nom */
+  .segment button { font-size: 12px; padding: 8px 2px; }
+  th.nom { min-width: 70px; max-width: 78px; }
+  td .case { min-width: 32px; max-width: 48px; font-size: 11px; }
+  .onglets-bas button { font-size: 10.5px; }
+}
+/* téléphone à l'horizontale (peu de hauteur) : en-tête et onglets plus bas, le planning garde la place */
+@media (max-height: 500px) and (max-width: 1000px) {
+  .entete { padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: 6px; }
+  .maj { display: none; }
+  .onglets-bas { display: flex; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: rgba(255,255,255,.97);
+    border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); }
+  .onglets-bas button { flex-direction: row; justify-content: center; gap: 6px; padding: 5px 0; }
+  .onglets-bas button .ico { font-size: 16px; }
+  main { padding: 8px 12px calc(48px + env(safe-area-inset-bottom)); }
+  .barre { margin-bottom: 6px; } .segment button { padding: 5px 10px; }
+  .defile { max-height: calc(100vh - 165px); max-height: calc(100dvh - 165px); }
+  .onglets-bas .badge { position: static; margin-left: 2px; }
+  #appli[data-onglet="planning"] .bandeau { display: none; }
+  #appli[data-onglet="planning"] .puce-info { display: none !important; }      /* le nombre sur l'onglet Infos suffit */
+  #appli[data-onglet="infos"] .barre, #appli[data-onglet="infos"] .planning, #appli[data-onglet="infos"] #bloc-messages { display: none; }
+  #appli[data-onglet="messages"] .barre, #appli[data-onglet="messages"] .planning, #appli[data-onglet="messages"] #bloc-infos { display: none; }
+  .bandeau { grid-template-columns: 1fr; }
+}
+/* grand écran : le planning prend la largeur, la police grandit un peu */
+@media (min-width: 1600px) {
+  main { max-width: 1800px; }
+  table { font-size: 14px; }
+  td .case { max-width: 90px; font-size: 13px; }
+}
+@media print { .entete, .barre .segment:last-child, .bandeau, .onglets-bas, .puce-info { display: none !important; }
+  .defile { max-height: none; overflow: visible; } }
 </style>
 </head>
 <body>
@@ -150,8 +215,7 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
     <input type="password" id="mdp" autocomplete="current-password" required>
     <button class="bouton" id="valider" type="submit">Se connecter</button>
     <div class="erreur" id="erreur" role="alert"></div>
-    <p class="note">Les mêmes identifiant et mot de passe que dans le logiciel (8 caractères ou plus).
-      Tout est chiffré : le planning n'est lisible qu'après votre connexion, sur votre appareil.</p>
+    <p class="note">Identifiant et mot de passe du logiciel.</p>
   </form>
 </section>
 
@@ -167,15 +231,21 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
       <button type="button" id="rester">Rester connecté</button></div>
     <p class="maj" id="maj"></p>
     <div class="bandeau">
-      <section class="bloc"><h2>Infos du jour</h2><div id="infos"></div></section>
-      <section class="bloc"><h2>Messages <span class="pastille-nb cache" id="nb-messages"></span></h2><div id="messages"></div></section>
+      <section class="bloc" id="bloc-infos"><h2>Infos du jour</h2><div id="infos"></div></section>
+      <section class="bloc" id="bloc-messages"><h2>Messages <span class="pastille-nb cache" id="nb-messages"></span></h2><div id="messages"></div></section>
     </div>
+    <button type="button" class="puce-info" id="puce-info"><span>ℹ️</span><span class="texte-puce" id="texte-puce"></span><span>›</span></button>
     <div class="barre">
       <div class="segment" id="choix-mois"></div>
       <div class="segment" id="choix-vue"></div>
     </div>
     <section class="planning" id="planning"></section>
   </main>
+  <nav class="onglets-bas" id="onglets-bas" aria-label="Rubriques">
+    <button type="button" data-onglet="planning"><span class="ico">📅</span>Planning</button>
+    <button type="button" data-onglet="infos"><span class="ico">ℹ️</span>Infos<span class="badge cache" id="badge-infos"></span></button>
+    <button type="button" data-onglet="messages"><span class="ico">✉️</span>Messages<span class="badge cache" id="badge-messages"></span></button>
+  </nav>
 </div>
 
 <script>
@@ -186,7 +256,7 @@ const d64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
 const b64 = (o) => btoa(String.fromCharCode(...new Uint8Array(o)));
 const echap = (t) => String(t).replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
-let etat = { donnees: null, messages: [], cles: null, mois: null, vue: "techs", ouverts: {} };
+let etat = { donnees: null, messages: [], cles: null, mois: null, vue: "techs", ouverts: {}, onglet: "planning" };
 
 async function lireJSON(nom) {
   const r = await fetch(nom + "?t=" + Date.now(), { cache: "no-store" });
@@ -261,7 +331,7 @@ function dateLongue(iso) {
 
 function dessinerBandeau() {
   const D = etat.donnees;
-  $("maj").textContent = "Mis à jour le " + D.maj.slice(8, 10) + "/" + D.maj.slice(5, 7) + " à " + D.maj.slice(11);
+  $("maj").textContent = "Mis à jour " + D.maj.slice(8, 10) + "/" + D.maj.slice(5, 7) + " · " + D.maj.slice(11);
   // Infos : celles du jour ; « Infos à venir » et « Infos archivées » se déplient d'un clic
   const quand = (i) => {
     const maj = (t) => t.charAt(0).toUpperCase() + t.slice(1);
@@ -284,6 +354,16 @@ function dessinerBandeau() {
     `<div class="texte">${echap(x.t)}</div></div>`;
   const nouveaux = etat.messages.filter((x) => !x.lu), lus = etat.messages.filter((x) => x.lu);
   $("nb-messages").textContent = nouveaux.length; $("nb-messages").classList.toggle("cache", !nouveaux.length);
+  // Téléphone : nombres sur les onglets du bas, et l'info du jour en une ligne au-dessus du planning
+  $("badge-messages").textContent = nouveaux.length; $("badge-messages").classList.toggle("cache", !nouveaux.length);
+  $("badge-infos").textContent = duJour.length; $("badge-infos").classList.toggle("cache", !duJour.length);
+  const puce = $("puce-info");
+  puce.classList.toggle("presente", duJour.length > 0);
+  if (duJour.length) {
+    const i = duJour[0];
+    puce.style.background = i.f; puce.style.color = i.e; puce.style.borderLeft = "4px solid " + i.l;
+    $("texte-puce").textContent = i.t;
+  }
   $("messages").innerHTML = (nouveaux.length ? nouveaux.map(carteMsg).join("") : '<p class="vide">Aucun nouveau message.</p>') +
     depliant("messages-archives", "Messages archivés", '<div class="archive">' + lus.map(carteMsg).join("") + "</div>", lus.length);
   for (const id of ["infos-a-venir", "infos-archivees", "messages-archives"]) {
@@ -312,9 +392,28 @@ function boutons(conteneur, choix, actif, rappel) {
 function couleurCase(v) {
   const C = etat.donnees.couleurs;
   if (!v) return "";
-  const p = v.split(/[\/+]/);
-  if (p.length === 2 && C[p[0]] && C[p[1]]) return `background:linear-gradient(90deg, ${C[p[0]]} 50%, ${C[p[1]]} 50%)`;
   return C[v] ? `background:${C[v]}` : "background:#e2e8f0";
+}
+
+function moities(v) {
+  /* « TS/ICSI » (deux demi-journées) ou « A.FIV+CECOS » (deux missions) : [TS, ICSI] si les deux ont une couleur */
+  const C = etat.donnees.couleurs, p = v ? v.split(/[\/+]/) : [];
+  return p.length === 2 && !C[v] && (C[p[0]] || p[0] === "ABS") && (C[p[1]] || p[1] === "ABS") ? p : null;
+}
+
+function caseHTML(v, classe) {
+  /* Une case : coupée en haut et en bas si elle a deux moitiés (comme dans le logiciel) */
+  const m = moities(v), C = etat.donnees.couleurs;
+  if (!m) return `<span class="${classe}" style="${couleurCase(v)}" title="${echap(v)}">${echap(v)}</span>`;
+  const morceau = (x) => `<span style="background:${C[x] || "#e2e8f0"}">${echap(x)}</span>`;
+  return `<span class="${classe} deux" title="${echap(v)}">${morceau(m[0])}${morceau(m[1])}</span>`;
+}
+
+function changerOnglet(o) {
+  etat.onglet = o;
+  $("appli").dataset.onglet = o;
+  for (const b of $("onglets-bas").querySelectorAll("button")) b.classList.toggle("actif", b.dataset.onglet === o);
+  window.scrollTo(0, 0);
 }
 
 function dessinerPlanning() {
@@ -340,14 +439,14 @@ function dessinerPlanning() {
     const notes = {};
     for (const x of D.infos) (notes[x.d] = notes[x.d] || []).push(x);
     const caches = auj && !etat.passes ? auj - 1 : 0;      // mois en cours : à partir d'aujourd'hui
-    zone.innerHTML = '<div class="agenda">' + (caches ? `<button type="button" class="voir-passes" id="voir-passes">Afficher les ${caches} jour${caches > 1 ? "s" : ""} passé${caches > 1 ? "s" : ""}</button>` : "") +
+    zone.innerHTML = '<div class="agenda">' + (caches ? `<button type="button" class="voir-passes" id="voir-passes">Jours passés (${caches})</button>` : "") +
       M.jours.map((j, i) => {
       if (j.j <= caches) return "";
       const v = maLigne.c[i];
       const iso = M.cle + "-" + String(j.j).padStart(2, "0");
       const infos = (notes[iso] || []).map((x) => `<span class="note-jour" style="background:${echap(x.f)};border-color:${echap(x.l)};color:${echap(x.e)}">${echap(x.t)}</span>`).join("");
       return `<div class="jour${j.j === auj ? " auj" : ""}${j.off ? " off" : ""}${auj && j.j < auj ? " passe" : ""}"><div class="date"><b>${j.j}</b><span>${echap(j.s)}${j.ferie ? " · férié" : ""}</span></div>` +
-        '<div class="contenu">' + (v ? `<span class="poste" style="${couleurCase(v)}">${echap(v)}</span>` : '<span class="rien">—</span>') + infos + "</div></div>";
+        '<div class="contenu">' + (v ? caseHTML(v, "poste") : '<span class="rien">—</span>') + infos + "</div></div>";
     }).join("") + "</div>";
     if (caches) $("voir-passes").onclick = () => { etat.passes = true; dessinerPlanning(); };
     return;
@@ -363,7 +462,7 @@ function dessinerPlanning() {
     html += `<tr class="${r.nom === moi ? "moi" : ""}${sep ? " separation" : ""}"><th class="nom">${echap(r.nom)}</th>`;
     html += r.c.map((v, i) => {
       const j = M.jours[i];
-      return `<td class="${j.off ? "off" : ""}${j.j === auj ? " auj" : ""}">${v ? `<span class="case" style="${couleurCase(v)}" title="${echap(v)}">${echap(v)}</span>` : ""}</td>`;
+      return `<td class="${j.off ? "off" : ""}${j.j === auj ? " auj" : ""}">${v ? caseHTML(v, "case") : ""}</td>`;
     }).join("") + "</tr>";
   }
   zone.innerHTML = html + "</tbody></table></div>";
@@ -403,6 +502,9 @@ $("rester").addEventListener("click", activite);
 setInterval(surveillerInactivite, 1000);
 
 $("formulaire").addEventListener("submit", seConnecter);
+for (const b of $("onglets-bas").querySelectorAll("button")) b.addEventListener("click", () => changerOnglet(b.dataset.onglet));
+$("puce-info").addEventListener("click", () => changerOnglet("infos"));
+changerOnglet("planning");
 $("sortir").addEventListener("click", sortir);
 (async () => {
   const garde = sessionStorage.getItem("pma");
