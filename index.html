@@ -111,6 +111,9 @@ tr.separation th, tr.separation td { border-top: 2px solid #cbd5e1; }
   animation: tourne .8s linear infinite; vertical-align: -3px; margin-right: 8px; }
 @keyframes tourne { to { transform: rotate(360deg); } }
 /* case coupée (deux demi-journées, deux missions) : en haut et en bas, comme dans le logiciel */
+.case.fo, .poste.fo { position: relative; padding-top: 11px !important; }
+.case.fo::before, .poste.fo::before { content: "FO"; position: absolute; left: 2px; top: 1px; font-size: 8.5px; line-height: 1; font-weight: 700;
+  background: #334155; color: #fff; border-radius: 3px; padding: 1px 3px; }
 .case.deux { display: inline-flex; flex-direction: column; padding: 0; overflow: hidden; line-height: 1.15; }
 .case.deux > span { display: block; padding: 2px 5px; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; }
 .case.deux > span + span { border-top: 1px solid rgba(255,255,255,.75); }
@@ -313,6 +316,7 @@ async function charger() {
 
 async function ouvrir(cles) {
   etat.cles = cles;
+  etat.version = await versionEnLigne();
   await charger();
   $("ecran-connexion").classList.add("cache");
   $("appli").classList.remove("cache");
@@ -404,6 +408,10 @@ function moities(v) {
 function caseHTML(v, classe) {
   /* Une case : coupée en haut et en bas si elle a deux moitiés (comme dans le logiciel) */
   const m = moities(v), C = etat.donnees.couleurs;
+  if (!m && /^FO ./.test(v)) {        /* formation : le poste en entier, « FO » en petite étiquette en haut à gauche */
+    const base = v.slice(3);
+    return `<span class="${classe} fo" style="background:${C[v] || C[base] || "#e2e8f0"}" title="${echap(v)}">${echap(base)}</span>`;
+  }
   if (!m) return `<span class="${classe}" style="${couleurCase(v)}" title="${echap(v)}">${echap(v)}</span>`;
   const morceau = (x) => `<span style="background:${C[x] || "#e2e8f0"}">${echap(x)}</span>`;
   return `<span class="${classe} deux" title="${echap(v)}">${morceau(m[0])}${morceau(m[1])}</span>`;
@@ -513,12 +521,18 @@ $("sortir").addEventListener("click", sortir);
 document.addEventListener("visibilitychange", async () => {     // retour sur la page (notification) : tout de suite à jour
   if (document.hidden || !etat.cles) return;
   if (Date.now() - derniereActivite > INACTIVITE_MS) { sortir(); return; }     // parti plus de 15 minutes : déconnecté
-  try { await charger(); dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
+  await suivre(false);
 });
-setInterval(async () => {           // mise à jour toutes les minutes tant que la page est ouverte
-  if (!etat.cles || document.hidden) return;
-  try { await charger(); dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
-}, 60 * 1000);
+async function versionEnLigne() {
+  try { return (await lireJSON("version.json")).v || ""; } catch (e) { return ""; }
+}
+async function suivre(force) {      /* recharge seulement si la version publiée a changé (petit fichier : presque rien) */
+  if (!etat.cles || (document.hidden && !force)) return;
+  const v = await versionEnLigne();
+  if (!force && v && v === etat.version) return;
+  try { await charger(); etat.version = v; dessiner(); } catch (e) { /* hors ligne : on garde l'affichage */ }
+}
+setInterval(() => suivre(false), 15 * 1000);
 </script>
 </body>
 </html>
